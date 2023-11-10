@@ -9,13 +9,23 @@
   {%- set existing_relation = load_cached_relation(this) -%}
   {%- set target_relation = this.incorporate(type='table') -%}
 
-  {% set on_cluster = on_cluster_clause(target_relation) %}
-  {% if on_cluster.strip() == '' %}
+  {%- set on_cluster = on_cluster_clause(target_relation) -%}
+  {%- if on_cluster.strip() == '' -%}
      {% do exceptions.raise_compiler_error('To use distributed materialization cluster setting in dbt profile must be set') %}
-  {% endif %}
+  {%- endif -%}
 
-  {% set existing_relation_local = existing_relation.incorporate(path={"identifier": this.identifier + local_suffix}) if existing_relation is not none else none %}
-  {% set target_relation_local = target_relation.incorporate(path={"identifier": this.identifier + local_suffix}) if target_relation is not none else none %}
+  -- check if existing relation is valid
+  {%- set is_existing_valid = validate_relation_existence(existing_relation, on_cluster=True) -%}
+  {%- if is_existing_valid -%}
+    {%- set existing_relation_local = load_cached_relation(this.incorporate(path={"identifier": this.identifier + local_suffix})) -%}
+    {%- if not validate_relation_existence(existing_relation_local, on_cluster=True) -%}
+      {%- set existing_relation_local = none -%}
+    {%- endif -%}
+  {%- else -%}
+    {%- set existing_relation_local = none -%}
+  {%- endif -%}
+
+  {%- set target_relation_local = target_relation.incorporate(path={"identifier": this.identifier + local_suffix}) if target_relation is not none else none -%}
 
   {%- set backup_relation = none -%}
   {%- set preexisting_backup_relation = none -%}
@@ -48,7 +58,7 @@
 
   {% if backup_relation is none %}
     {{ create_distributed_local_table(target_relation, target_relation_local, view_relation) }}
-  {% elif existing_relation.can_exchange %}
+  {% elif existing_relation.can_exchange and existing_relation_local.can_on_cluster == backup_relation.can_on_cluster %}
     -- We can do an atomic exchange, so no need for an intermediate
     {% call statement('main') -%}
       {{ create_empty_table_from_relation(backup_relation, view_relation) }}

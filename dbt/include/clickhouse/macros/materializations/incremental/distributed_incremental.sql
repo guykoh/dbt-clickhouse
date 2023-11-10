@@ -14,7 +14,17 @@
      {% do exceptions.raise_compiler_error('To use distributed materializations cluster setting in dbt profile must be set') %}
   {% endif %}
 
-  {% set existing_relation_local = existing_relation.incorporate(path={"identifier": this.identifier + local_suffix}) if existing_relation is not none else none %}
+    -- check if existing relation is valid
+  {%- set is_existing_valid = validate_relation_existence(existing_relation, on_cluster=True) -%}
+  {%- if is_existing_valid -%}
+    {%- set existing_relation_local = load_cached_relation(this.incorporate(path={"identifier": this.identifier + local_suffix})) -%}
+    {%- if not validate_relation_existence(existing_relation_local, on_cluster=True) -%}
+      {%- set existing_relation_local = none -%}
+    {%- endif -%}
+  {%- else -%}
+    {%- set existing_relation_local = none -%}
+  {%- endif -%}
+
   {% set target_relation_local = target_relation.incorporate(path={"identifier": this.identifier + local_suffix}) if target_relation is not none else none %}
 
   {%- set unique_key = config.get('unique_key') -%}
@@ -52,7 +62,7 @@
     {{ create_view_as(view_relation, sql) }}
   {% endcall %}
 
-  {% if existing_relation is none %}
+  {% if existing_relation_local is none %}
     -- No existing table, simply create a new one
     {{ create_distributed_local_table(target_relation, target_relation_local, view_relation, sql) }}
 

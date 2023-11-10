@@ -10,7 +10,7 @@
     {%- set backup_relation_type = existing_relation.type -%}
     {%- set backup_relation = make_backup_relation(target_relation, backup_relation_type) -%}
     {%- set preexisting_backup_relation = load_cached_relation(backup_relation) -%}
-    {% if not existing_relation.can_exchange %}
+    {% if not existing_relation.can_exchange or existing_relation.can_on_cluster != target_relation.can_on_cluster %}
       {%- set intermediate_relation =  make_intermediate_relation(target_relation) -%}
       {%- set preexisting_intermediate_relation = load_cached_relation(intermediate_relation) -%}
     {% endif %}
@@ -33,7 +33,7 @@
     {% call statement('main') -%}
       {{ get_create_view_as_sql(target_relation, sql) }}
     {%- endcall %}
-  {% elif existing_relation.can_exchange %}
+  {% elif existing_relation.can_exchange and existing_relation.can_on_cluster == backup_relation.can_on_cluster %}
     -- We can do an atomic exchange, so no need for an intermediate
     {% call statement('main') -%}
       {{ get_create_view_as_sql(backup_relation, sql) }}

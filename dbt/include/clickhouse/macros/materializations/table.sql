@@ -6,11 +6,12 @@
   {%- set preexisting_backup_relation = none -%}
   {%- set preexisting_intermediate_relation = none -%}
 
-  {% if existing_relation is not none %}
+  {% set is_existing_valid = validate_relation_existence(existing_relation, on_cluster=False) %}
+  {% if is_existing_valid %}
     {%- set backup_relation_type = existing_relation.type -%}
     {%- set backup_relation = make_backup_relation(target_relation, backup_relation_type) -%}
     {%- set preexisting_backup_relation = load_cached_relation(backup_relation) -%}
-    {% if not existing_relation.can_exchange %}
+    {% if not existing_relation.can_exchange or existing_relation.can_on_cluster != backup_relation.can_on_cluster %}
       {%- set intermediate_relation =  make_intermediate_relation(target_relation) -%}
       {%- set preexisting_intermediate_relation = load_cached_relation(intermediate_relation) -%}
     {% endif %}
@@ -27,13 +28,13 @@
   -- `BEGIN` happens here:
   {{ run_hooks(pre_hooks, inside_transaction=True) }}
 
-  {% if backup_relation is none %}
+  {% if not is_existing_valid %}
     {{ log('Creating new relation ' + target_relation.name )}}
     -- There is not existing relation, so we can just create
     {% call statement('main') -%}
       {{ get_create_table_as_sql(False, target_relation, sql) }}
     {%- endcall %}
-  {% elif existing_relation.can_exchange %}
+  {% elif existing_relation.can_exchange and existing_relation.can_on_cluster == backup_relation.can_on_cluster %}
     -- We can do an atomic exchange, so no need for an intermediate
     {% call statement('main') -%}
       {{ get_create_table_as_sql(False, backup_relation, sql) }}
