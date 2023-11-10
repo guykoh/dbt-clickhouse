@@ -1,9 +1,9 @@
 import os
-
 from typing import List, Optional
+
 import pytest
-from dbt.tests.util import run_dbt
 from dbt.tests.adapter.relations.test_changing_relation_type import BaseChangeRelationTypeValidator
+from dbt.tests.util import run_dbt
 
 
 class TestChangeRelationTypes(BaseChangeRelationTypeValidator):
@@ -14,7 +14,9 @@ class TestChangeRelationTypesWithDistributedMaterializations(BaseChangeRelationT
 
     # changing relation from distributed to non-distrubted should raise compilation error
     # unless with a full-refresh flag
-    def _run_and_check_materialization_error(self, materialization, extra_args: Optional[List] = None):
+    def _run_and_check_materialization_error(
+        self, materialization, extra_args: Optional[List] = None
+    ):
         run_args = ["run", '--vars', f'materialized: {materialization}']
         if extra_args:
             run_args.extend(extra_args)
@@ -31,7 +33,9 @@ class TestChangeRelationTypesWithDistributedMaterializations(BaseChangeRelationT
         self._run_and_check_materialization('distributed_incremental')
         self._run_and_check_materialization_error('table')
         self._run_and_check_materialization('table', extra_args=['--full-refresh'])
-        self._run_and_check_materialization('distributed_incremental', extra_args=['--full-refresh'])
+        self._run_and_check_materialization(
+            'distributed_incremental', extra_args=['--full-refresh']
+        )
         self._run_and_check_materialization_error('incremental')
         self._run_and_check_materialization('incremental', extra_args=['--full-refresh'])
         self._run_and_check_materialization('distributed_table', extra_args=['--full-refresh'])
