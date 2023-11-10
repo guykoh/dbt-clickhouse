@@ -38,7 +38,10 @@
       if(engine not in ('MaterializedView', 'View'), 'table', 'view') as type,
       db.engine as db_engine,
       {%- if adapter.get_clickhouse_cluster_name() -%}
-        count(distinct _shard_num) > 1  as  is_on_cluster
+        count(distinct _shard_num) > 1 
+          or ( 
+            select count() as cluster_cnt from system.clusters where cluster = '{{ adapter.get_clickhouse_cluster_name().strip("\"") }}'
+          ) == 1  as  is_on_cluster
         from clusterAllReplicas({{ adapter.get_clickhouse_cluster_name() }}, system.tables) as t
           join system.databases as db on t.database = db.name
         where schema = '{{ schema_relation.schema }}'
@@ -126,3 +129,19 @@
     EXCHANGE {{ obj_types }} {{ old_relation }} AND {{ target_relation }} {{ on_cluster_clause(target_relation)}}
   {% endcall %}
 {% endmacro %}
+
+{% macro validate_relation_existence(relation, type='table', on_cluster=False) -%}
+  {%- if relation is not none -%}
+    {%- if relation.can_on_cluster != on_cluster -%}
+      {%- if should_full_refresh() or relation.type != type -%}
+        {{ log('Dropping relation ' + relation.name )}}
+        {{ drop_relation_if_exists(relation) }}
+        {% do return(False) %}
+      {%- else -%}
+        {% do exceptions.raise_compiler_error('Incompatible relation status. Relation ' ~ relation ~ ' already exists but not in the correct mode, on cluster should be ' ~ on_cluster ~ '. Please do a full-refresh on the model ' ~ this ) %}
+      {%- endif -%}
+    {%- endif -%}
+    {% do return(True) %}
+  {%- endif -%}
+  {% do return(False) %}
+{%- endmacro %}

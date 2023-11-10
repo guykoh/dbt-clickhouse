@@ -3,6 +3,7 @@
   {%- set existing_relation = load_cached_relation(this) -%}
   {%- set target_relation = this.incorporate(type='table') -%}
 
+  {%- set is_existing_valid = validate_relation_existence(existing_relation, on_cluster=False) -%}
   {%- set unique_key = config.get('unique_key') -%}
   {% if unique_key is not none and unique_key|length == 0 %}
     {% set unique_key = none %}
@@ -28,7 +29,7 @@
   {{ run_hooks(pre_hooks, inside_transaction=True) }}
   {% set to_drop = [] %}
 
-  {% if existing_relation is none %}
+  {% if not is_existing_valid %}
     -- No existing table, simply create a new one
     {% call statement('main') %}
         {{ get_create_table_as_sql(False, target_relation, sql) }}
