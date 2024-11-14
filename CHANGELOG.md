@@ -1,3 +1,7 @@
+### Release [1.8.5]
+#### New Features
+* Added abillity to set [SQL Security](https://clickhouse.com/docs/en/sql-reference/statements/create/view#sql_security) for normal views, referenced by [issue 359](https://github.com/ClickHouse/dbt-clickhouse/issues/359).
+
 ### Unreleased
 ### Improvement
 * Added support for [range_hashed](https://clickhouse.com/docs/en/sql-reference/dictionaries#range_hashed) and [complex_key_range_hashed](https://clickhouse.com/docs/en/sql-reference/dictionaries#complex_key_range_hashed) layouts to the dictionary materialization. ([#361](https://github.com/ClickHouse/dbt-clickhouse/pull/361))
