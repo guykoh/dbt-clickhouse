@@ -1,7 +1,6 @@
 ### Release [x.x.x]
 ### Improvements
 * Ignores incompatible settings based on the configured Engine.
-* Add support for "microbatch" incremental strategy.
 
 #### New Features
 * [ClickHouse indexes](https://clickhouse.com/docs/en/optimize/sparse-primary-indexes) are now fully supported for `table` materialization.
@@ -15,6 +14,7 @@ The index config should be added to the model config. for instance:
          }]
   ) }}
   ```
+* Add support for "microbatch" incremental strategy.
  
 ### Release [1.8.7], 2025-01-05
 
