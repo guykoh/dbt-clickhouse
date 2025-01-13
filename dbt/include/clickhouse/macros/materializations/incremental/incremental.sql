@@ -30,7 +30,6 @@
 
   {% if existing_relation is none %}
     -- No existing table, simply create a new one
-    {{ log('THIS SCHEMA: ' ~ sql) }}
     {% call statement('main') %}
         {{ get_create_table_as_sql(False, target_relation, sql) }}
     {% endcall %}

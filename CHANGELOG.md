@@ -1,7 +1,7 @@
 ### Release [x.x.x]
 ### Improvements
 * Ignores incompatible settings based on the configured Engine.
-
+* Add support for "microbatch" incremental strategy.
 
 #### New Features
 * [ClickHouse indexes](https://clickhouse.com/docs/en/optimize/sparse-primary-indexes) are now fully supported for `table` materialization.
@@ -20,8 +20,6 @@ The index config should be added to the model config. for instance:
 
 ### New Features
 * Added support for [refreshable materialized view](https://clickhouse.com/docs/en/materialized-view/refreshable-materialized-view) ([#401](https://github.com/ClickHouse/dbt-clickhouse/pull/401))
-
-* Add support for "microbatch" incremental strategy.
 
 ### Improvement
 * Avoid potential data loss by using `CREATE OR REPLACE DICTIONARY` to atomically update a dictionary ([#393](https://github.com/ClickHouse/dbt-clickhouse/pull/393))
